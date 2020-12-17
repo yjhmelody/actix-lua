@@ -5,6 +5,7 @@ use crate::actor::LuaActor;
 use rlua::{Error as LuaError, Lua};
 
 /// `LuaActorBuilder` creates a new `LuaActor` with given Lua script.
+#[derive(Debug)]
 pub struct LuaActorBuilder {
     started: Option<String>,
     handle: Option<String>,
@@ -17,7 +18,7 @@ impl Default for LuaActorBuilder {
         LuaActorBuilder {
             started: noop.clone(),
             handle: noop.clone(),
-            stopped: noop.clone(),
+            stopped: noop,
         }
     }
 }
@@ -70,9 +71,9 @@ impl LuaActorBuilder {
     pub fn build_with_vm(self, vm: Lua) -> Result<LuaActor, LuaError> {
         LuaActor::new_with_vm(
             vm,
-            self.started.clone(),
-            self.handle.clone(),
-            self.stopped.clone(),
+            self.started,
+            self.handle,
+            self.stopped,
         )
     }
 
@@ -81,7 +82,7 @@ impl LuaActorBuilder {
         LuaActor::new(
             self.started.clone(),
             self.handle.clone(),
-            self.stopped.clone(),
+            self.stopped,
         )
     }
 }
@@ -115,5 +116,4 @@ mod tests {
             panic!("should return error");
         }
     }
-
 }

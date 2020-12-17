@@ -11,7 +11,7 @@ use std::time::Duration;
 
 /// Top level struct which holds a lua state for itself.
 ///
-/// It provides most of the actix context API to the lua enviroment.
+/// It provides most of the actix context API to the lua environment.
 ///
 /// You can create new `LuaActor` with [`LuaActorBuilder`].
 ///
@@ -305,7 +305,7 @@ impl Handler<SendAttempt> for LuaActor {
 
     fn handle(&mut self, attempt: SendAttempt, ctx: &mut Context<Self>) -> Self::Result {
         let rec = &self.recipients[&attempt.recipient_name];
-        let self_addr = ctx.address().clone();
+        let self_addr = ctx.address();
         rec.send(attempt.msg.clone())
             .into_actor(self)
             .then(move |res, _, _| {

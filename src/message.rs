@@ -33,11 +33,26 @@ impl Message for LuaMessage {
     type Result = LuaMessage;
 }
 
+// macro_rules! lua_message_convert_boolean {
+//     ( $($ty:ty),+ ) => {
+//         $(
+//             impl From<$ty> for LuaMessage {
+//                 fn from(s: $ty) -> Self {
+//                     LuaMessage::Boolean(s != 0)
+//                 }
+//             }
+//         )+
+//     };
+// }
+//
+// lua_message_convert_boolean!(i8, u8, i16, u16, i32, u32, i64);
+
 impl From<bool> for LuaMessage {
     fn from(s: bool) -> Self {
         LuaMessage::Boolean(s)
     }
 }
+
 
 impl<'l> From<&'l str> for LuaMessage {
     fn from(s: &'l str) -> Self {
@@ -52,22 +67,18 @@ impl From<String> for LuaMessage {
 }
 
 macro_rules! lua_message_convert_int {
-    ($x:ty) => {
-        impl From<$x> for LuaMessage {
-            fn from(s: $x) -> Self {
-                LuaMessage::Integer(i64::from(s))
+    ( $($ty:ty),+ ) => {
+        $(
+            impl From<$ty> for LuaMessage {
+                fn from(s: $ty) -> Self {
+                    LuaMessage::Integer(i64::from(s))
+                }
             }
-        }
+        )+
     };
 }
 
-lua_message_convert_int!(i8);
-lua_message_convert_int!(u8);
-lua_message_convert_int!(i16);
-lua_message_convert_int!(u16);
-lua_message_convert_int!(i32);
-lua_message_convert_int!(u32);
-lua_message_convert_int!(i64);
+lua_message_convert_int!(i8, u8, i16, u16, i32, u32, i64);
 
 impl From<usize> for LuaMessage {
     fn from(s: usize) -> Self {
@@ -88,17 +99,18 @@ impl From<HashMap<String, LuaMessage>> for LuaMessage {
 }
 
 macro_rules! lua_message_convert_float {
-    ($x:ty) => {
-        impl From<$x> for LuaMessage {
-            fn from(s: $x) -> Self {
-                LuaMessage::Number(f64::from(s))
+    ( $($ty:ty),+ ) => {
+        $(
+            impl From<$ty> for LuaMessage {
+                fn from(s: $ty) -> Self {
+                    LuaMessage::Number(f64::from(s))
+                }
             }
-        }
+        )+
     };
 }
 
-lua_message_convert_float!(f32);
-lua_message_convert_float!(f64);
+lua_message_convert_float!(f32, f64);
 
 impl<'lua> FromLua<'lua> for LuaMessage {
     fn from_lua(v: Value<'lua>, ctx: Context<'lua>) -> LuaResult<LuaMessage> {
@@ -167,13 +179,13 @@ mod tests {
     }
 
     #[test]
-    fn to_lua() {
+    fn to_lua<'lua>() {
         // we only check if they have the correct variant
         let lua = Lua::new();
         lua.context(|ctx| {
             assert_eq!(
-                discriminant(&LuaMessage::Integer(42).to_lua(ctx).unwrap()),
-                discriminant(&Value::Integer(42))
+                LuaMessage::Integer(42).to_lua(ctx),
+                Ok(Value::<'lua>::Integer(42)),
             );
             assert_eq!(
                 discriminant(&LuaMessage::String("foo".to_string()).to_lua(ctx).unwrap()),
